@@ -4,5 +4,5 @@ Notice the simplicity here:
 2. The code also reads in a "linear" fashion and is easy to follow.
 
 Warning:
-1. This code is NOT meant to demonstarte how to share data across goroutines, just how to synchronize.
+1. This code is NOT meant to demonstrate how to share data across goroutines, just how to synchronize.
 2. There is no error handling. There are other examples which deal with error handling/timeouts etc.
