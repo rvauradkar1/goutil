@@ -8,29 +8,9 @@ import (
 func main() {
 	println("Fan in........")
 
-	ch := make(chan string)
-	go func() {
-		defer close(ch)
-		for i := 0; i < 3; i++ {
-			ch <- "First " + strconv.Itoa(i)
-		}
-	}()
-
-	ch1 := make(chan string)
-	go func() {
-		defer close(ch1)
-		for i := 0; i < 3; i++ {
-			ch1 <- "Second " + strconv.Itoa(i)
-		}
-	}()
-
-	ch2 := make(chan string)
-	go func() {
-		defer close(ch2)
-		for i := 0; i < 3; i++ {
-			ch2 <- "Third " + strconv.Itoa(i)
-		}
-	}()
+	ch := makech("First ")
+	ch1 := makech("Second ")
+	ch2 := makech("Third ")
 
 	out := merge(ch, ch1, ch2)
 
@@ -38,6 +18,17 @@ func main() {
 		println(s)
 	}
 
+}
+
+func makech(s string) chan string {
+	ch := make(chan string)
+	go func() {
+		defer close(ch)
+		for i := 0; i < 3; i++ {
+			ch <- s + strconv.Itoa(i)
+		}
+	}()
+	return ch
 }
 
 func merge(channels ...<-chan string) <-chan string {
