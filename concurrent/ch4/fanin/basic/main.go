@@ -7,13 +7,13 @@ import (
 
 func main() {
 	fmt.Println("Fan in....")
-	ch := s1()
-	for s := range ch {
+	tasks := taskGenerator()
+	for s := range tasks {
 		fmt.Println("val = " + s)
 	}
 }
 
-func s1() chan string {
+func taskGenerator() chan string {
 	ch := make(chan string)
 	go func() {
 		defer close(ch)

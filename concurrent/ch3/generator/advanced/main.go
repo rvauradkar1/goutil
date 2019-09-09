@@ -8,7 +8,7 @@ import (
 func main() {
 	fmt.Println("Generator basic....")
 	done := make(chan bool)
-	ch := generate(done)
+	ch := generator(done)
 	for s := range ch {
 		fmt.Println(s)
 		if s == "1000" {
@@ -18,7 +18,7 @@ func main() {
 	}
 }
 
-func generate(done chan bool) chan string {
+func generator(done chan bool) chan string {
 	ch := make(chan string)
 	go func() {
 		defer close(ch)

@@ -8,11 +8,11 @@ import (
 func main() {
 	println("Fan in........")
 
-	ch := makech("First ")
-	ch1 := makech("Second ")
-	ch2 := makech("Third ")
+	tasks1 := taskGenerator("First ")
+	tasks2 := taskGenerator("Second ")
+	tasks3 := taskGenerator("Third ")
 
-	out := merge(ch, ch1, ch2)
+	out := merge(tasks1, tasks2, tasks3)
 
 	for s := range out {
 		println(s)
@@ -20,7 +20,7 @@ func main() {
 
 }
 
-func makech(s string) chan string {
+func taskGenerator(s string) chan string {
 	ch := make(chan string)
 	go func() {
 		defer close(ch)
@@ -31,6 +31,7 @@ func makech(s string) chan string {
 	return ch
 }
 
+// From Samir Ajamni's excellent post on blog.golang
 func merge(channels ...<-chan string) <-chan string {
 	var wg sync.WaitGroup
 	wg.Add(len(channels))

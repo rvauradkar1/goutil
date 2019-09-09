@@ -7,13 +7,13 @@ import (
 
 func main() {
 	fmt.Println("Generator basic....")
-	ch := generate()
+	ch := generator()
 	for s := range ch {
 		fmt.Println(s)
 	}
 }
 
-func generate() chan string {
+func generator() chan string {
 	ch := make(chan string)
 
 	go func() {
