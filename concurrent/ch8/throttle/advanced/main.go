@@ -13,7 +13,7 @@ func main() {
 		fmt.Println("Executing command.....")
 	}
 	t := &throttler{}
-	t.init(command, 3, time.Duration(10*time.Millisecond))
+	t.init(command, 10*time.Millisecond, 3)
 	for i := 0; i < 5; i++ {
 		go func(i int) {
 			err := t.execute()
@@ -53,7 +53,6 @@ func (t *throttler) execute() chan error {
 	}()
 	return errorch
 }
-
 func (t *throttler) init(command commandFunc, timeout time.Duration, limit int) {
 	t.command = command
 	t.timeout = timeout
