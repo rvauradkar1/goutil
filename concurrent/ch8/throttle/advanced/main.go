@@ -6,19 +6,21 @@ import (
 	"time"
 )
 
+func command() {
+	time.Sleep(10 * time.Millisecond)
+	fmt.Println("Executing command.....")
+}
+
 func main() {
 	fmt.Println("Throttle demo....")
-	command := func() {
-		time.Sleep(10 * time.Millisecond)
-		fmt.Println("Executing command.....")
-	}
 	t := &throttler{}
 	t.init(command, 10*time.Millisecond, 3)
 	for i := 0; i < 5; i++ {
 		go func(i int) {
 			err := t.execute()
-			c := <-err
-			fmt.Println("Err = ", i, "___", c, "___", c == nil)
+			if c := <-err; err != nil {
+				fmt.Println("Err = ", i, "___", c, "___")
+			}
 		}(i)
 	}
 	time.Sleep(time.Second)
@@ -35,19 +37,14 @@ type commandFunc func()
 
 func (t *throttler) execute() chan error {
 	errorch := make(chan error, 1)
-	fn := func() {
-		fmt.Println("Releaseing.....")
-		<-t.semaphore
-	}
 	go func() {
 		select {
 		case t.semaphore <- true:
-			defer fn()
+			defer func() { <-t.semaphore }()
 			t.command()
 			errorch <- nil
 
 		default:
-			fmt.Println("Reached threshold, cannot run your function")
 			errorch <- errors.New("reached threshold, cannot run your function")
 		}
 	}()
