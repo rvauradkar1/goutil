@@ -4,14 +4,14 @@ import "fmt"
 
 // Sharing by communicating
 func main() {
-	fmt.Println("Channels....")
+	fmt.Println("Futures....")
 
-	ch := service()
+	ch := futureTask()
 
 	fmt.Println(<-ch)
 }
 
-func service() chan string {
+func futureTask() chan string {
 	ch := make(chan string)
 	go func() {
 		ch <- "Result..."
