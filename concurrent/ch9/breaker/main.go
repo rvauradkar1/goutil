@@ -8,7 +8,7 @@ import (
 )
 
 func command() {
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	fmt.Println("Executing command.....")
 }
 
@@ -16,7 +16,7 @@ func main() {
 	errors.New("")
 	fmt.Println("Throttle demo....")
 	breaker := &breaker{}
-	breaker.init("name", 10*time.Millisecond, 3)
+	breaker.init("name", 10*time.Millisecond, 1)
 	for i := 0; i < 5; i++ {
 		go func(i int) {
 			err := breaker.execute(command)
@@ -25,7 +25,16 @@ func main() {
 			}
 		}(i)
 	}
+	fmt.Println("Sleeping")
+	t := time.Now()
 	time.Sleep(time.Second)
+	d := time.Now().Sub(t)
+	fmt.Printf("diff %d\n", d/1e9)
+}
+
+type breakerFuncs interface {
+	commandFunc()
+	defaultFunc()
 }
 
 type commandFunc func()
@@ -53,9 +62,11 @@ func (b *breaker) execute(command commandFunc) chan error {
 	go func() {
 		select {
 		case b.semaphore <- true:
-			defer func() { <-b.semaphore }()
-			command()
-			errorch <- nil
+			go func() {
+				defer func() { <-b.semaphore }()
+				command()
+				errorch <- nil
+			}()
 		default:
 			errorch <- errors.New("reached threshold, cannot run your function")
 		}
@@ -63,11 +74,11 @@ func (b *breaker) execute(command commandFunc) chan error {
 	return errorch
 }
 
-type DNSConfigError struct {
+type BreakerError struct {
 	Err error
 }
 
-func (e *DNSConfigError) Unwrap() error   { return e.Err }
-func (e *DNSConfigError) Error() string   { return "error reading DNS config: " + e.Err.Error() }
-func (e *DNSConfigError) Timeout() bool   { return false }
-func (e *DNSConfigError) Temporary() bool { return false }
+func (e *BreakerError) Unwrap() error   { return e.Err }
+func (e *BreakerError) Error() string   { return "error reading DNS config: " + e.Err.Error() }
+func (e *BreakerError) Timeout() bool   { return false }
+func (e *BreakerError) Temporary() bool { return false }
