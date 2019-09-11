@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"runtime"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -17,19 +19,20 @@ func main() {
 	fmt.Println("Throttle demo....")
 	breaker := &breaker{}
 	breaker.init("name", 10*time.Millisecond, 1)
+	var wg sync.WaitGroup
+	wg.Add(5)
 	for i := 0; i < 5; i++ {
 		go func(i int) {
+			defer wg.Done()
 			err := breaker.execute(command)
 			if c := <-err; c != nil {
 				fmt.Println("Err = ", i, "___", c, "___")
 			}
 		}(i)
 	}
-	fmt.Println("Sleeping")
-	t := time.Now()
-	time.Sleep(time.Second)
-	d := time.Now().Sub(t)
-	fmt.Printf("diff %d\n", d/1e9)
+	fmt.Println("Number of go routines = ", runtime.NumGoroutine())
+	wg.Wait()
+	fmt.Println("Done!!")
 }
 
 type breakerFuncs interface {
