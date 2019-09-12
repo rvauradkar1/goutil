@@ -7,6 +7,7 @@ import (
 )
 
 func Test_scanner_shutdown(t *testing.T) {
+	fmt.Println("Testing Test_scanner_shutdown")
 	b := &breaker{}
 	b.init("name", time.Second, 0)
 	b.shutdown()
@@ -37,7 +38,7 @@ func scanner2(b *breaker) {
 				<-b.semaphore
 				b.closeCircuit()
 				fmt.Println("Resetting circuit")
-				b.status = iCircuitRepaired
+				b.status = iCircuitGood
 			default:
 				fmt.Println("Circuit still bad!!!")
 				b.status = iCircuitStillBad
@@ -49,20 +50,18 @@ func scanner2(b *breaker) {
 	}
 }
 
-func Test_scanner_not_ok(t *testing.T) {
+func Test_scanner_close_ciucuit(t *testing.T) {
 	b := &breaker{}
-	b.init("name", time.Second, 0)
+	b.init("name", time.Second, 1)
 	b.isOk = false
-	fmt.Println("starting Test_scanner_not_ok")
-	go func() {
-		fmt.Println("Kicked in = ", b.status)
-		if b.status != iCircuitStillBad {
-			t.Errorf("Circuit should still be bad")
-		}
-		b.shutdown()
-	}()
-	fmt.Println("Statritng")
-	scanner(b)
+	fmt.Println("starting Test_scanner_close_ciucuit")
+	go func() { scanner(b) }()
+	time.Sleep(110 * time.Millisecond)
+	fmt.Println("Return = ", b.status)
+	if b.status != iCircuitGood {
+		t.Errorf("Circuit should have been repaired")
+	}
+	b.shutdown()
 	fmt.Println("Return = ", b.status)
 
 }

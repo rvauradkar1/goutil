@@ -75,9 +75,8 @@ func (b *breaker) init(name string, timeout time.Duration, numConcurrent int) {
 const (
 	iShutdown        = 0
 	iShuttingDown    = 1
-	iCircuitRepaired = 2
-	iCircuitStillBad = 3
-	iCircuitGood     = 4
+	iCircuitStillBad = 2
+	iCircuitGood     = 3
 )
 
 func scanner(b *breaker) {
@@ -87,8 +86,7 @@ func scanner(b *breaker) {
 			b.status = iShutdown
 			return
 		}
-		time.Sleep(1000 * time.Millisecond)
-
+		time.Sleep(100 * time.Millisecond)
 		if !b.isOk {
 			select {
 			case <-b.shutdownch:
@@ -98,14 +96,13 @@ func scanner(b *breaker) {
 				<-b.semaphore
 				b.closeCircuit()
 				fmt.Println("Resetting circuit")
-				b.status = iCircuitRepaired
+				b.status = iCircuitGood
 			default:
 				fmt.Println("Circuit still bad!!!")
 				b.status = iCircuitStillBad
 
 			}
 		}
-		b.status = iCircuitGood
 		fmt.Println("Scanner status = ", b.status)
 	}
 }
