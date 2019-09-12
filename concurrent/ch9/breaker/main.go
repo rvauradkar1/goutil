@@ -58,6 +58,7 @@ type breaker struct {
 	isOk          bool
 	isShutdown    bool
 	shutdownch    chan bool
+	status        int
 }
 
 // New initializes the circuit breaker
@@ -71,10 +72,19 @@ func (b *breaker) init(name string, timeout time.Duration, numConcurrent int) {
 	go scanner(b)
 }
 
+const (
+	iShutdown        = 0
+	iShuttingDown    = 1
+	iCircuitRepaired = 2
+	iCircuitStillBad = 3
+	iCircuitGood     = 4
+)
+
 func scanner(b *breaker) {
 	for {
-		fmt.Println("Shiw = ", b.isShutdown)
+		fmt.Println("Scanner isShutdown = ", b.isShutdown)
 		if b.isShutdown {
+			b.status = iShutdown
 			return
 		}
 		time.Sleep(1000 * time.Millisecond)
@@ -83,15 +93,20 @@ func scanner(b *breaker) {
 			select {
 			case <-b.shutdownch:
 				fmt.Println("Shuttind down")
-				return
+				b.status = iShuttingDown
 			case b.semaphore <- true:
 				<-b.semaphore
 				b.closeCircuit()
 				fmt.Println("Resetting circuit")
+				b.status = iCircuitRepaired
 			default:
 				fmt.Println("Circuit still bad!!!")
+				b.status = iCircuitStillBad
+
 			}
 		}
+		b.status = iCircuitGood
+		fmt.Println("Scanner status = ", b.status)
 	}
 }
 

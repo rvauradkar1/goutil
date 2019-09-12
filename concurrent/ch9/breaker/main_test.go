@@ -8,52 +8,61 @@ import (
 
 func Test_scanner_shutdown(t *testing.T) {
 	b := &breaker{}
-	b.init("name", time.Second, 1)
+	b.init("name", time.Second, 0)
 	b.shutdown()
 	scanner(b)
-	r := <-b.shutdownch
-	if r != true {
-		t.Errorf("Circuit should be closed")
+	if b.status != iShutdown || !b.isShutdown {
+		t.Errorf("Shutdown should have initiated")
 	}
-	if b.isShutdown != true {
-		t.Errorf("Circuit should be closed")
+	c := <-b.shutdownch
+	if c != true {
+		t.Errorf("Shutdown channel not populated")
 	}
 }
 
-func Test_scanner(t *testing.T) {
-	b := &breaker{}
-	b.init("name", time.Second, 1)
-	b.shutdown()
-	scanner(b)
-	r := <-b.shutdownch
-	if r != true {
-		t.Errorf("Circuit should be closed")
-	}
-	if b.isShutdown != true {
-		t.Errorf("Circuit should be closed")
-	}
-}
-
-func scanner1(b *breaker) {
+func scanner2(b *breaker) {
 	for {
-		fmt.Println("Shiw = ", b.isShutdown)
+		fmt.Println("Scanner isShutdown = ", b.isShutdown)
 		if b.isShutdown {
+			b.status = iShutdown
 			return
 		}
 		time.Sleep(1000 * time.Millisecond)
-
 		if !b.isOk {
 			select {
 			case <-b.shutdownch:
 				fmt.Println("Shuttind down")
-				return
+				b.status = iShuttingDown
 			case b.semaphore <- true:
 				<-b.semaphore
 				b.closeCircuit()
 				fmt.Println("Resetting circuit")
+				b.status = iCircuitRepaired
 			default:
 				fmt.Println("Circuit still bad!!!")
+				b.status = iCircuitStillBad
+
 			}
 		}
+		b.status = iCircuitGood
+		fmt.Println("Scanner status = ", b.status)
 	}
+}
+
+func Test_scanner_not_ok(t *testing.T) {
+	b := &breaker{}
+	b.init("name", time.Second, 0)
+	b.isOk = false
+	fmt.Println("starting Test_scanner_not_ok")
+	go func() {
+		fmt.Println("Kicked in = ", b.status)
+		if b.status != iCircuitStillBad {
+			t.Errorf("Circuit should still be bad")
+		}
+		b.shutdown()
+	}()
+	fmt.Println("Statritng")
+	scanner(b)
+	fmt.Println("Return = ", b.status)
+
 }
