@@ -18,7 +18,7 @@ func main() {
 	errors.New("")
 	fmt.Println("Throttle demo....")
 	breaker := &breaker{}
-	breaker.init("name", 10*time.Millisecond, 1)
+	breaker.init("name", 10*time.Millisecond, 3)
 	var wg sync.WaitGroup
 	wg.Add(5)
 	for i := 0; i < 5; i++ {
@@ -32,6 +32,10 @@ func main() {
 	}
 	fmt.Println("Number of go routines = ", runtime.NumGoroutine())
 	wg.Wait()
+	fmt.Printf("isOk = %v\n", breaker.isOk)
+	time.Sleep(2 * time.Second)
+	fmt.Printf("isOk = %v\n", breaker.isOk)
+	breaker.shutdown()
 	fmt.Println("Done!!")
 }
 
@@ -51,6 +55,9 @@ type breaker struct {
 	timeout       time.Duration
 	numConcurrent int
 	semaphore     chan bool
+	isOk          bool
+	isShutdown    bool
+	shutdownch    chan bool
 }
 
 // New initializes the circuit breaker
@@ -59,7 +66,52 @@ func (b *breaker) init(name string, timeout time.Duration, numConcurrent int) {
 	b.timeout = timeout
 	b.numConcurrent = numConcurrent
 	b.semaphore = make(chan bool, b.numConcurrent)
+	b.isOk = true
+	b.shutdownch = make(chan bool, 1)
+	go scanner(b)
 }
+
+func scanner(b *breaker) {
+	for {
+		fmt.Println("Shiw = ", b.isShutdown)
+		if b.isShutdown {
+			return
+		}
+		time.Sleep(1000 * time.Millisecond)
+
+		if !b.isOk {
+			select {
+			case <-b.shutdownch:
+				fmt.Println("Shuttind down")
+				return
+			case b.semaphore <- true:
+				<-b.semaphore
+				b.closeCircuit()
+				fmt.Println("Resetting circuit")
+			default:
+				fmt.Println("Circuit still bad!!!")
+			}
+		}
+	}
+}
+
+func (b *breaker) openCircuit() bool {
+	b.isOk = false
+	return b.isOk
+}
+
+func (b *breaker) closeCircuit() bool {
+	b.isOk = true
+	return b.isOk
+}
+
+func (b *breaker) shutdown() {
+	fmt.Println("SHudtting down....")
+	b.shutdownch <- true
+	fmt.Println("shut down....")
+	b.isShutdown = true
+}
+
 func (b *breaker) execute(command commandFunc) chan error {
 	errorch := make(chan error, 1)
 	go func() {
@@ -71,6 +123,7 @@ func (b *breaker) execute(command commandFunc) chan error {
 				errorch <- nil
 			}()
 		default:
+			b.openCircuit()
 			errorch <- errors.New("reached threshold, cannot run your function")
 		}
 	}()
