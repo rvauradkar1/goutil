@@ -148,12 +148,12 @@ func Test_execute_exceed_limit_wait_tillok_submit_more(t *testing.T) {
 
 	b.shutdown()
 }
-func Test_scanner_circuit_reset(t *testing.T) {
+func Test_scanner_circuit_multipl_shutdown(t *testing.T) {
 	b := &breaker{}
 	b.init("name", time.Second, 1)
 	b.isOk = false
 	b.healthCheckInterval = 10
-	fmt.Println("starting Test_scanner_circuit_still_bad")
+	fmt.Println("starting Test_scanner_circuit_multipl_shutdown")
 	time.Sleep(15 * time.Millisecond)
 	fmt.Println("Return = ", b.status)
 	if b.status != iCircuitGood {
@@ -161,4 +161,5 @@ func Test_scanner_circuit_reset(t *testing.T) {
 	}
 	b.shutdown()
 	fmt.Println("Return = ", b.status)
+	b.shutdown()
 }

@@ -23,15 +23,15 @@ type Handler func() error
 
 // Breaker struct for circuit breaker control parameters
 type breaker struct {
-	name                string
-	timeout             time.Duration
-	numConcurrent       int
-	semaphore           chan bool
-	isOk                bool
-	isShutdown          bool
-	shutdownch          chan bool
-	status              int
-	healthCheckInterval time.Duration
+	name                string        // For debudding purposes
+	timeout             time.Duration // Timeout for each task
+	numConcurrent       int           // Number of concurrent request taken
+	semaphore           chan bool     // Controls access to execute tasks
+	isOk                bool          // Can circuit take more load?
+	isShutdown          bool          // Has circuit been shutdown completely?
+	shutdownch          chan bool     // Used to kill healthcheck goroutine when shutdown
+	status              int           // States that a ciucuit can go through
+	healthCheckInterval time.Duration // Scanning interval to reset circuit if it has been tripped
 }
 
 // New initializes the circuit breaker
@@ -48,7 +48,6 @@ func (b *breaker) init(name string, timeout time.Duration, numConcurrent int) {
 
 const (
 	iShutdown        = 0
-	iShuttingDown    = 1
 	iCircuitStillBad = 2
 	iCircuitGood     = 3
 )
@@ -62,9 +61,6 @@ func scanner(b *breaker) {
 		time.Sleep(b.healthCheckInterval * time.Millisecond)
 		if !b.isOk {
 			select {
-			case <-b.shutdownch:
-				fmt.Println("aa Shuttind down")
-				b.status = iShuttingDown
 			case b.semaphore <- true:
 				<-b.semaphore
 				b.closeCircuit()
@@ -94,6 +90,9 @@ var mutex = &sync.Mutex{}
 
 func (b *breaker) shutdown() {
 	fmt.Println("SHudtting down....")
+	if b.isShutdown {
+		return
+	}
 	b.shutdownch <- true
 	fmt.Println("shut down....")
 	mutex.Lock()
@@ -104,6 +103,11 @@ func (b *breaker) shutdown() {
 
 func (b *breaker) execute(commands commandFuncs) chan error {
 	errorch := make(chan error, 1)
+	if b.isShutdown {
+		be := &BreakerError{Err: errors.New("cicuit has been permanently shutdown. create a new one")}
+		errorch <- be
+		return errorch
+	}
 	go func() {
 		select {
 		case b.semaphore <- true:
@@ -123,10 +127,11 @@ func (b *breaker) execute(commands commandFuncs) chan error {
 }
 
 type BreakerError struct {
-	Err error
+	Err       error
+	isTimeout bool
 }
 
-func (e *BreakerError) Unwrap() error   { return e.Err }
-func (e *BreakerError) Error() string   { return "error reading DNS config: " + e.Err.Error() }
-func (e *BreakerError) Timeout() bool   { return false }
-func (e *BreakerError) Temporary() bool { return false }
+func (b *BreakerError) Unwrap() error  { return b.Err }
+func (b *BreakerError) Error() string  { return b.Err.Error() }
+func (b *BreakerError) Timeout() bool  { return b.isTimeout }
+func (b *BreakerError) Shutdown() bool { return false }

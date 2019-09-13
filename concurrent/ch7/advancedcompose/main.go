@@ -29,9 +29,9 @@ func service1(s string) (<-chan s1Resp, error) {
 			if i == 3 {
 				s1 := s1Resp{err: errors.Errorf("Service failure on %d", i)}
 				out <- s1
-			} else {
-				out <- s1Resp{s: fmt.Sprintf(s+"\n"+"Performing Service %d\n", i)}
+				return
 			}
+			out <- s1Resp{s: fmt.Sprintf(s+"\n"+"Performing Service %d\n", i)}
 		}
 	}()
 	return out, nil
