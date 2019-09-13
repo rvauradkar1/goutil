@@ -107,16 +107,45 @@ func Test_execute_exceed_limit_wait_till_circuit_ok(t *testing.T) {
 	b := &breaker{}
 	b.init("name", 10*time.Millisecond, 3)
 	b.healthCheckInterval = 1000
-	w := &wrapper2{exec: false}
-	b.execute(w)
-	w = &wrapper2{exec: false}
-	b.execute(w)
-	w = &wrapper2{exec: false}
-	b.execute(w)
-	time.Sleep(999 * time.Millisecond)
-	if !w.exec {
-		t.Errorf("Service should have executed")
+	w1 := &wrapper2{"Service 1", false}
+	b.execute(w1)
+	w2 := &wrapper2{"Service 2", false}
+	b.execute(w2)
+	w3 := &wrapper2{"Service 3", false}
+	b.execute(w3)
+	w4 := &wrapper2{"Service 4", false}
+	b.execute(w4)
+	w5 := &wrapper2{"Service 5", false}
+	b.execute(w5)
+	time.Sleep(2020 * time.Millisecond)
+	if !b.isOk {
+		t.Errorf("Circuit should have been repaired")
 	}
+
+	b.shutdown()
+}
+
+func Test_execute_exceed_limit_wait_tillok_submit_more(t *testing.T) {
+	errors.New("")
+	fmt.Println("Running Test_execute_exceed_limit_wait_till_circuit_ok demo....")
+	b := &breaker{}
+	b.init("name", 10*time.Millisecond, 3)
+	b.healthCheckInterval = 1000
+	w1 := &wrapper2{"Service 1", false}
+	b.execute(w1)
+	w2 := &wrapper2{"Service 2", false}
+	b.execute(w2)
+	w3 := &wrapper2{"Service 3", false}
+	b.execute(w3)
+	w4 := &wrapper2{"Service 4", false}
+	b.execute(w4)
+	w5 := &wrapper2{"Service 5", false}
+	b.execute(w5)
+	time.Sleep(2020 * time.Millisecond)
+	if !b.isOk {
+		t.Errorf("Circuit should have been repaired")
+	}
+
 	b.shutdown()
 }
 func Test_scanner_circuit_reset(t *testing.T) {

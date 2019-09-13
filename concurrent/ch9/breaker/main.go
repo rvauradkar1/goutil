@@ -113,6 +113,8 @@ func (b *breaker) execute(commands commandFuncs) chan error {
 				errorch <- nil
 			}()
 		default:
+			commands.defaultFunc()
+			commands.cleanupFunc()
 			b.openCircuit()
 			errorch <- errors.New("reached threshold, cannot run your function")
 		}
