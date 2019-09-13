@@ -2,54 +2,16 @@ package main
 
 import (
 	"fmt"
-	"runtime"
 	"sync"
 	"time"
 
 	"github.com/pkg/errors"
 )
 
-type wrapper struct {
-}
-
-func (w *wrapper) commandFunc() {
-	time.Sleep(100 * time.Millisecond)
-	fmt.Println("Executing command.....")
-}
-func (w *wrapper) defaultFunc() {
-	fmt.Println("Defaulting command.....")
-}
-func (w *wrapper) cleanupFunc() {
-	fmt.Println("Canceling command.....")
-}
-
 func main() {
 	errors.New("")
-	fmt.Println("Throttle demo....")
-	commands := &wrapper{}
-	breaker := &breaker{}
-	breaker.init("name", 10*time.Millisecond, 3)
-	var wg sync.WaitGroup
-	wg.Add(5)
-	for i := 0; i < 5; i++ {
-		go func(i int) {
-			defer wg.Done()
-			err := breaker.execute(commands)
-			if c := <-err; c != nil {
-				fmt.Println("Err = ", i, "___", c, "___")
-			}
-		}(i)
-	}
-	fmt.Println("Number of go routines = ", runtime.NumGoroutine())
-	wg.Wait()
-	fmt.Printf("isOk = %v\n", breaker.isOk)
-	time.Sleep(2 * time.Second)
-	fmt.Printf("isOk = %v\n", breaker.isOk)
-	breaker.shutdown()
-	fmt.Println("Done!!")
 }
 
-type commandFunc func()
 type commandFuncs interface {
 	commandFunc()
 	defaultFunc()
@@ -93,7 +55,6 @@ const (
 
 func scanner(b *breaker) {
 	for {
-		fmt.Println("Scanner isShutdown = ", b.isShutdown)
 		if b.isShutdown {
 			b.status = iShutdown
 			return
@@ -114,7 +75,6 @@ func scanner(b *breaker) {
 				b.status = iCircuitStillBad
 			}
 		}
-		//b.status = iCircuitGood
 	}
 }
 
