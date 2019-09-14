@@ -8,10 +8,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-func main() {
-	errors.New("")
-}
-
 // CommandFuncs is implemented by clients, mandatory
 type CommandFuncs interface {
 	CommandFunc()
@@ -106,7 +102,7 @@ func (b *Breaker) Shutdown() {
 func (b *Breaker) Execute(commands CommandFuncs) chan error {
 	errorch := make(chan error, 1)
 	if b.isShutdown {
-		be := &Error{Err: errors.New("cicuit has been permanently shutdown. create a new one")}
+		be := Error{Err: errors.New("cicuit has been permanently shutdown. create a new one")}
 		errorch <- be
 		return errorch
 	}
@@ -128,13 +124,21 @@ func (b *Breaker) Execute(commands CommandFuncs) chan error {
 	return errorch
 }
 
-// Error can be unwrappd by clients to determine exact nature of failure
-type Error struct {
-	Err       error
-	isTimeout bool
+func (b *Breaker) commandTimeout(c CommandFuncs) time.Duration {
+	if t, ok := c.(Timeout); ok {
+		return t.timeout()
+	}
+	return b.timeout
 }
 
-func (b *Error) Unwrap() error  { return b.Err }
-func (b *Error) Error() string  { return b.Err.Error() }
-func (b *Error) Timeout() bool  { return b.isTimeout }
-func (b *Error) Shutdown() bool { return false }
+// Error can be unwrappd by clients to determine exact nature of failure
+type Error struct {
+	Err        error
+	isTimeout  bool
+	isShutdown bool
+}
+
+func (b Error) Unwrap() error  { return b.Err }
+func (b Error) Error() string  { return b.Err.Error() }
+func (b Error) Timeout() bool  { return b.isTimeout }
+func (b Error) Shutdown() bool { return b.isShutdown }

@@ -1,9 +1,7 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"testing"
 	"time"
 
 	//"github.com/rvauradkar1/goutil/concurrent/ch9/breaker/breaker"
@@ -11,11 +9,10 @@ import (
 )
 
 func main() {
-
+	test()
 }
 
-func Test_Execute_exceed_limit_wait_till_circuit_ok(t *testing.T) {
-	errors.New("")
+func test() {
 	fmt.Println("Running Test_execute_exceed_limit_wait_till_circuit_ok demo....")
 	b := &breaker.Breaker{}
 	b.Init("name", 10*time.Millisecond, 3)

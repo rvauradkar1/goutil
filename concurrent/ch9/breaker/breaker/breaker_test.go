@@ -3,6 +3,7 @@ package breaker
 import (
 	"fmt"
 	"runtime"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -126,7 +127,6 @@ func Test_Execute_exceed_limit_wait_till_circuit_ok(t *testing.T) {
 }
 
 func Test_execute_exceed_limit_wait_tillok_submit_more(t *testing.T) {
-	errors.New("")
 	fmt.Println("Running Test_execute_exceed_limit_wait_till_circuit_ok demo....")
 	b := &Breaker{}
 	b.Init("name", 10*time.Millisecond, 3)
@@ -162,4 +162,36 @@ func Test_scanner_circuit_multipl_Shutdown(t *testing.T) {
 	b.Shutdown()
 	fmt.Println("Return = ", b.status)
 	b.Shutdown()
+}
+
+func Test_timeout_default(t *testing.T) {
+	b := &Breaker{}
+	b.Init("name", time.Second, 1)
+	to := b.commandTimeout(nil)
+	if to != time.Second {
+		t.Errorf("Was expecting a time.Second, instead got %v", to)
+	}
+	to = b.commandTimeout(&wrapper3{})
+	if to != time.Millisecond {
+		t.Errorf("Was expecting a time.Second, instead got %v", to)
+	}
+}
+
+func Test_exeute_after_shutdown(t *testing.T) {
+	fmt.Println("Running Test_exeute_after_shutdown demo....")
+	b := &Breaker{}
+	b.Init("name", 10*time.Millisecond, 3)
+	b.Shutdown()
+	w1 := &wrapper2{"Service 1", false}
+	ch := b.Execute(w1)
+	err := <-ch
+	fmt.Println(err)
+	e, ok := err.(Error)
+	if ok {
+		if !strings.Contains(e.Error(), "cicuit has been permanently shutdown") {
+			t.Errorf("Should contain %s %s'", "cicuit has been permanently shutdown", "'")
+		}
+		return
+	}
+	t.Errorf("Should return type of breaker.Error")
 }

@@ -38,3 +38,16 @@ func (w *wrapper2) DefaultFunc() {
 func (w *wrapper2) CleanupFunc() {
 	fmt.Println("Cleaning ", w.name)
 }
+
+type wrapper3 struct {
+}
+
+func (w *wrapper3) CommandFunc() {
+}
+func (w *wrapper3) DefaultFunc() {
+}
+func (w *wrapper3) CleanupFunc() {
+}
+func (w *wrapper3) timeout() time.Duration {
+	return time.Millisecond
+}
