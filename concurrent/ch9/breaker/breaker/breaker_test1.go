@@ -1,4 +1,4 @@
-package main
+package breaker
 
 import (
 	"fmt"
@@ -10,15 +10,15 @@ type wrapper struct {
 	exec bool
 }
 
-func (w *wrapper) commandFunc() {
+func (w *wrapper) CommandFunc() {
 	time.Sleep(1 * time.Millisecond)
 	fmt.Println("Executing ", w.name)
 	w.exec = true
 }
-func (w *wrapper) defaultFunc() {
+func (w *wrapper) DefaultFunc() {
 	fmt.Println("Defaulting command.....")
 }
-func (w *wrapper) cleanupFunc() {
+func (w *wrapper) CleanupFunc() {
 	fmt.Println("Canceling command.....")
 }
 
@@ -27,14 +27,14 @@ type wrapper2 struct {
 	exec bool
 }
 
-func (w *wrapper2) commandFunc() {
+func (w *wrapper2) CommandFunc() {
 	time.Sleep(1000 * time.Millisecond)
 	fmt.Println("Executing ", w.name)
 	w.exec = true
 }
-func (w *wrapper2) defaultFunc() {
+func (w *wrapper2) DefaultFunc() {
 	fmt.Println("Defaulting ", w.name)
 }
-func (w *wrapper2) cleanupFunc() {
+func (w *wrapper2) CleanupFunc() {
 	fmt.Println("Cleaning ", w.name)
 }
