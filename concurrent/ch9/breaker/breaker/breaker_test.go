@@ -104,9 +104,9 @@ func Test_Execute_2(t *testing.T) {
 
 func Test_Execute_exceed_limit_wait_till_circuit_ok(t *testing.T) {
 	errors.New("")
-	fmt.Println("Running Test_execute_exceed_limit_wait_till_circuit_ok demo....")
+	fmt.Println("Running Test_Execute_exceed_limit_wait_till_circuit_ok demo....")
 	b := &Breaker{}
-	b.Init("name", 10*time.Millisecond, 3)
+	b.Init("name", 2000*time.Millisecond, 3)
 	b.HealthCheckInterval = 1000
 	w1 := &wrapper2{"Service 1", false}
 	b.Execute(w1)
@@ -127,7 +127,7 @@ func Test_Execute_exceed_limit_wait_till_circuit_ok(t *testing.T) {
 }
 
 func Test_execute_exceed_limit_wait_tillok_submit_more(t *testing.T) {
-	fmt.Println("Running Test_execute_exceed_limit_wait_till_circuit_ok demo....")
+	fmt.Println("Running Test_execute_exceed_limit_wait_tillok_submit_more demo....")
 	b := &Breaker{}
 	b.Init("name", 10*time.Millisecond, 3)
 	b.HealthCheckInterval = 1000

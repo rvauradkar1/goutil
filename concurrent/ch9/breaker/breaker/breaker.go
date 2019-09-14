@@ -111,8 +111,18 @@ func (b *Breaker) Execute(commands CommandFuncs) chan error {
 		case b.semaphore <- true:
 			go func() {
 				defer func() { <-b.semaphore }()
-				commands.CommandFunc()
-				errorch <- nil
+				done := make(chan bool, 1)
+				go func() {
+					commands.CommandFunc()
+					done <- true
+				}()
+				select {
+				case <-time.After(b.commandTimeout(commands)):
+					commands.DefaultFunc()
+					commands.CleanupFunc()
+				case <-done:
+					errorch <- nil
+				}
 			}()
 		default:
 			commands.DefaultFunc()
