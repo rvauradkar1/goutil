@@ -53,8 +53,6 @@ const (
 	iCircuitGood     = 2
 )
 
-func Logger()
-
 func scanner(b *Breaker) {
 	for {
 		if b.isShutdown {

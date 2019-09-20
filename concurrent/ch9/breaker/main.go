@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 
-	//"github.com/rvauradkar1/goutil/concurrent/ch9/breaker/breaker"
-	"github.com/rvauradkar1/goutil/concurrent/ch9/breaker/breaker"
+	"github.com/rvauradkar1/goutil/concurrent/ch9/breaker/v1"
 )
 
 func main() {
@@ -13,6 +13,11 @@ func main() {
 }
 
 func test() {
+	f, err := os.OpenFile("testlogrus.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
+	if err != nil {
+		fmt.Printf("error opening file: %v", err)
+	}
+	defer f.Close()
 	fmt.Println("Running Test_execute_exceed_limit_wait_till_circuit_ok demo....")
 	b := &breaker.Breaker{}
 	b.Init("name", 10*time.Millisecond, 3)
@@ -30,6 +35,10 @@ func test() {
 	time.Sleep(2020 * time.Millisecond)
 
 	b.Shutdown()
+}
+
+func collectErr(chan error) {
+
 }
 
 type wrapper2 struct {
