@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-
 	s := serve{C: company{ID: "100", Name: "XYZ", employee: employee{Fname: "First"}}}
 
 	http.HandleFunc("/json", s.json)
@@ -21,7 +20,13 @@ func main() {
 
 	fmt.Println("Starting redirect...")
 
-	log.Fatal(http.ListenAndServe(":8080", http.HandlerFunc(s.https)))
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", s.https)
+	// Create a file server for static content like html, css, images, templates etc
+	fileServer := http.FileServer(http.Dir("./static/"))
+	// stripPrefix to remove the leading /static
+	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }
 
 type serve struct {
@@ -37,8 +42,8 @@ func (s *serve) xml(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *serve) https(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r.RequestURI)
-	http.Redirect(w, r, "https://localhost:8081"+r.RequestURI, http.StatusMovedPermanently)
+	fmt.Println("ppp ", r.RequestURI)
+	http.Redirect(w, r, "https://localhost:8081"+r.RequestURI, http.StatusTemporaryRedirect)
 }
 
 type company struct {
