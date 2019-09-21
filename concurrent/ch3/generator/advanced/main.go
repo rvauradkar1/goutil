@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	fmt.Println("Generator basic....")
+	fmt.Println("Generator advanced....")
 	done := make(chan bool)
 	ch := generator(done)
 	for s := range ch {

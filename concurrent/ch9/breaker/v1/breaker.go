@@ -56,7 +56,6 @@ const (
 func scanner(b *Breaker) {
 	for {
 		if b.isShutdown {
-			b.status = iShutdown
 			return
 		}
 		time.Sleep(b.HealthCheckInterval * time.Millisecond)
@@ -115,8 +114,8 @@ func (b *Breaker) Execute(commands CommandFuncs) chan error {
 				defer func() { <-b.semaphore }()
 				done := make(chan bool, 1)
 				go func() {
+					defer func() { done <- true }()
 					commands.CommandFunc()
-					done <- true
 				}()
 				select {
 				case <-time.After(b.commandTimeout(commands)):

@@ -15,7 +15,6 @@ func main() {
 
 func generator() chan string {
 	ch := make(chan string)
-
 	go func() {
 		defer close(ch)
 		for i := 0; i < 5; i++ {
