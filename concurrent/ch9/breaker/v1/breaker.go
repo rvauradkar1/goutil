@@ -8,11 +8,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// CommandFuncs is implemented by clients, mandatory
+// CommandFuncs is implemented by clients, mandatory for clients
 type CommandFuncs interface {
-	CommandFunc()
-	DefaultFunc()
-	CleanupFunc()
+	CommandFunc() // Function to do the actual work
+	DefaultFunc() // Function called by breaker in case of timeout, client implements default behavior
+	CleanupFunc() // Function called by breaker in case of timeout. client implements any cleanup actions
 }
 
 // Timeout is optionally implemented by clients to override the global circuit breaker timeout
@@ -41,10 +41,10 @@ func (b *Breaker) Init(name string, timeout time.Duration, numConcurrent int) {
 	b.numConcurrent = numConcurrent
 	b.semaphore = make(chan bool, b.numConcurrent)
 	b.isOk = true
-	b.HealthCheckInterval = 100
-	go scanner(b)
+	b.HealthCheckInterval = 100 // Defaulted to 100 ms, can be overridden
 	log = logrus.New()
 	log.Formatter = new(logrus.JSONFormatter)
+	go healthcheck(b) // Start goroutine to start healthcheck
 }
 
 const (
@@ -53,7 +53,7 @@ const (
 	iCircuitGood     = 2
 )
 
-func scanner(b *Breaker) {
+func healthcheck(b *Breaker) {
 	for {
 		if b.isShutdown {
 			return
@@ -111,12 +111,15 @@ func (b *Breaker) Execute(commands CommandFuncs) chan error {
 		select {
 		case b.semaphore <- true:
 			go func() {
+				// Have to release token
 				defer func() { <-b.semaphore }()
+				// Channel for signalling completion of command
 				done := make(chan bool, 1)
 				go func() {
 					defer func() { done <- true }()
 					commands.CommandFunc()
 				}()
+				// Deals with timeout of command
 				select {
 				case <-time.After(b.commandTimeout(commands)):
 					commands.DefaultFunc()
