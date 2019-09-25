@@ -7,8 +7,6 @@ import (
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 func Test_is_ok(t *testing.T) {
@@ -48,8 +46,6 @@ func Test_scanner_circuit_repaired(t *testing.T) {
 }
 
 func Test_Execute_t(t *testing.T) {
-	errors.New("")
-	fmt.Println("Throttle demo....")
 	commands := &wrapper{}
 	b := &Breaker{}
 	b.Init("name", 10*time.Millisecond, 3)
@@ -75,7 +71,6 @@ func Test_Execute_t(t *testing.T) {
 }
 
 func Test_Execute_1(t *testing.T) {
-	errors.New("")
 	fmt.Println("Throttle demo....")
 	b := &Breaker{}
 	b.Init("name", 10*time.Millisecond, 3)
@@ -89,7 +84,6 @@ func Test_Execute_1(t *testing.T) {
 }
 
 func Test_Execute_2(t *testing.T) {
-	errors.New("")
 	fmt.Println("Running Test_Execute_2 demo....")
 	b := &Breaker{}
 	b.Init("name", 10*time.Millisecond, 3)
@@ -103,7 +97,6 @@ func Test_Execute_2(t *testing.T) {
 }
 
 func Test_Execute_exceed_limit_wait_till_circuit_ok(t *testing.T) {
-	errors.New("")
 	fmt.Println("Running Test_Execute_exceed_limit_wait_till_circuit_ok demo....")
 	b := &Breaker{}
 	b.Init("name", 2000*time.Millisecond, 3)
@@ -207,10 +200,10 @@ func ExampleBreaker_Init() {
 }
 
 // Demonstrates a simple use of the circuit breaker, with an override of the HealthCheckInterval
-func ExampleBreaker_Execute_1() {
+func ExampleBreaker_Execute_simple() {
 	commands := &wrapperE1{"Task1"}
 	b := &Breaker{}
-	b.Init("name", 10*time.Millisecond, 3)
+	b.Init("name", 1000*time.Millisecond, 3)
 	// Override the HealthCheckInterval
 	b.HealthCheckInterval = 1000
 	var wg sync.WaitGroup
@@ -228,21 +221,26 @@ func ExampleBreaker_Execute_1() {
 }
 
 // Demonstrates a simple use of the circuit breaker, client overrides timeout at the breaker level
-func ExampleBreaker_Execute_2() {
-	commands := &wrapperE1{"Task1"}
+func ExampleBreaker_Execute_custom_timeut() {
+	commands := &wrapperE2{"Task2"}
 	b := &Breaker{}
 	b.Init("name", 10*time.Millisecond, 3)
-	b.HealthCheckInterval = 1000
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		err := b.Execute(commands)
 		if c := <-err; c != nil {
-			fmt.Println(err)
+			//fmt.Println(err)
+			e, ok := c.(Error)
+			if ok {
+				fmt.Println(e)
+				fmt.Println(e.Timeout())
+			}
 		}
 	}()
 	wg.Wait()
 	b.Shutdown()
-	// Output: Executing  Task1
+	// Output: task timed out
+	// true
 }

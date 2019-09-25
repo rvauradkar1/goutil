@@ -50,9 +50,9 @@ func (b *Breaker) Init(name string, timeout time.Duration, numConcurrent int) {
 }
 
 const (
-	iShutdown        = 0
-	iCircuitStillBad = 1
-	iCircuitGood     = 2
+	iShutdown        = 10
+	iCircuitStillBad = 20
+	iCircuitGood     = 30
 )
 
 func healthcheck(b *Breaker) {
