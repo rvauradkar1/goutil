@@ -206,7 +206,7 @@ func ExampleBreaker_Init() {
 	b.Shutdown()
 }
 
-// Demonstrates a simple use of the circuit breaker, with a overide of the HealthCheckInterval
+// Demonstrates a simple use of the circuit breaker, with an override of the HealthCheckInterval
 func ExampleBreaker_Execute_1() {
 	commands := &wrapperE1{"Task1"}
 	b := &Breaker{}
@@ -219,7 +219,27 @@ func ExampleBreaker_Execute_1() {
 		defer wg.Done()
 		err := b.Execute(commands)
 		if c := <-err; c != nil {
-			fmt.Println("Err = ", "___", c, "___")
+			fmt.Println(err)
+		}
+	}()
+	wg.Wait()
+	b.Shutdown()
+	// Output: Executing  Task1
+}
+
+// Demonstrates a simple use of the circuit breaker, client overrides timeout at the breaker level
+func ExampleBreaker_Execute_2() {
+	commands := &wrapperE1{"Task1"}
+	b := &Breaker{}
+	b.Init("name", 10*time.Millisecond, 3)
+	b.HealthCheckInterval = 1000
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err := b.Execute(commands)
+		if c := <-err; c != nil {
+			fmt.Println(err)
 		}
 	}()
 	wg.Wait()
