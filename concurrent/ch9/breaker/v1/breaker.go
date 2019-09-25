@@ -9,6 +9,8 @@ import (
 )
 
 // CommandFuncs is implemented by clients, mandatory for clients
+// Clients need ensure that they do not panic. If CommandFunc panics,
+// DefaultFunc and CleanupFunc are called in order. If DefaultFunc panics, then CleanupFunc is NEVER called
 type CommandFuncs interface {
 	CommandFunc() // Function to do the actual work
 	DefaultFunc() // Function called by breaker in case of timeout, client implements default behavior

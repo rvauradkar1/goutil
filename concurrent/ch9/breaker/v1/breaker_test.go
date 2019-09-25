@@ -195,3 +195,34 @@ func Test_exeute_after_shutdown(t *testing.T) {
 	}
 	t.Errorf("Should return type of breaker.Error")
 }
+
+// Demonstrates use of init of the circuit breaker
+func ExampleBreaker_Init() {
+	fmt.Println("Testing Test_is_ok")
+	b := &Breaker{}
+	// Initializes the circuit
+	b.Init("name", time.Second, 10)
+	// Shuts down the circuit completely
+	b.Shutdown()
+}
+
+// Demonstrates a simple use of the circuit breaker, with a overide of the HealthCheckInterval
+func ExampleBreaker_Execute_1() {
+	commands := &wrapperE1{"Task1"}
+	b := &Breaker{}
+	b.Init("name", 10*time.Millisecond, 3)
+	// Override the HealthCheckInterval
+	b.HealthCheckInterval = 1000
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err := b.Execute(commands)
+		if c := <-err; c != nil {
+			fmt.Println("Err = ", "___", c, "___")
+		}
+	}()
+	wg.Wait()
+	b.Shutdown()
+	// Output: Executing  Task1
+}
