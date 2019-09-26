@@ -1,6 +1,7 @@
 package breaker
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -66,9 +67,11 @@ func healthcheck(b *Breaker) {
 			case b.semaphore <- true:
 				<-b.semaphore
 				b.closeCircuit()
+				fmt.Println("repaired")
 				log.WithFields(logrus.Fields{"name": b.name}).Info("circuit repaired, load it normal")
 				b.status = iCircuitGood
 			default:
+				fmt.Println("stidd bad")
 				log.WithFields(logrus.Fields{"name": b.name}).Info("attempt to repair circuit failed")
 				b.status = iCircuitStillBad
 			}

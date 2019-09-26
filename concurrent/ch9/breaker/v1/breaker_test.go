@@ -249,7 +249,7 @@ func ExampleBreaker_Execute_custom_timeut() {
 func ExampleBreaker_Execute_custoom() {
 	fmt.Println("running ExampleBreaker_Execute_multiple_clients")
 	b := &Breaker{}
-	b.Init("name", 10*time.Millisecond, 5)
+	b.Init("name", 10*time.Millisecond, 4)
 	var wg sync.WaitGroup
 	wg.Add(5)
 	for i := 0; i < 5; i++ {
@@ -259,10 +259,10 @@ func ExampleBreaker_Execute_custoom() {
 			err := b.Execute(commands)
 			c := <-err
 			if c != nil {
-				fmt.Println(c)
+				fmt.Println("1 ", c)
 				e, ok := c.(Error)
 				if ok {
-					fmt.Println(e)
+					fmt.Println("2 ", e)
 					fmt.Println(e.Timeout())
 				}
 			}
