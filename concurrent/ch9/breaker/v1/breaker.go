@@ -105,8 +105,8 @@ func (b *Breaker) Shutdown() {
 }
 
 // Execute is called by clients to initiate task
-func (b *Breaker) Execute(commands CommandFuncs) chan error {
-	errorch := make(chan error, 1)
+func (b *Breaker) Execute(commands CommandFuncs) chan Error {
+	errorch := make(chan Error, 1)
 	if b.isShutdown {
 		be := Error{Err: errors.New("cicuit has been permanently shutdown. create a new one")}
 		errorch <- be
@@ -133,14 +133,14 @@ func (b *Breaker) Execute(commands CommandFuncs) chan error {
 					be := Error{isTimeout: true, Err: errors.New("task timed out")}
 					errorch <- be
 				case <-done:
-					errorch <- nil
+					errorch <- Error{isSuccess: true, Err: nil}
 				}
 			}()
 		default:
 			commands.DefaultFunc()
 			commands.CleanupFunc()
 			b.openCircuit()
-			errorch <- errors.New("reached threshold, cannot run your function")
+			errorch <- Error{isSuccess: false, Err: errors.New("reached threshold, cannot run your command")}
 		}
 	}()
 	return errorch
@@ -158,9 +158,11 @@ type Error struct {
 	Err        error
 	isTimeout  bool
 	isShutdown bool
+	isSuccess  bool
 }
 
 func (b Error) Unwrap() error  { return b.Err }
 func (b Error) Error() string  { return b.Err.Error() }
 func (b Error) Timeout() bool  { return b.isTimeout }
+func (b Error) Success() bool  { return b.isSuccess }
 func (b Error) Shutdown() bool { return b.isShutdown }
