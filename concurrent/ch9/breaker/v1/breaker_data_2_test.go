@@ -13,7 +13,6 @@ type wrapperE1 struct {
 }
 
 func (w *wrapperE1) CommandFunc() {
-	log.Formatter = new(logrus.JSONFormatter)
 	time.Sleep(100 * time.Millisecond)
 	fmt.Println("Executing ", w.name)
 }
