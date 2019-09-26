@@ -3,6 +3,7 @@ package breaker
 import (
 	"fmt"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -201,7 +202,6 @@ func ExampleBreaker_Init() {
 
 // Demonstrates a simple use of the circuit breaker, with an override of the HealthCheckInterval
 func ExampleBreaker_Execute_simple() {
-	commands := &wrapperE1{"Task1"}
 	b := &Breaker{}
 	b.Init("name", 1000*time.Millisecond, 3)
 	// Override the HealthCheckInterval
@@ -210,6 +210,7 @@ func ExampleBreaker_Execute_simple() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		commands := &wrapperE1{"Task1"}
 		err := b.Execute(commands)
 		if c := <-err; c != nil {
 			fmt.Println(err)
@@ -222,16 +223,15 @@ func ExampleBreaker_Execute_simple() {
 
 // Demonstrates a simple use of the circuit breaker, client overrides timeout at the breaker level
 func ExampleBreaker_Execute_custom_timeut() {
-	commands := &wrapperE2{"Task2"}
 	b := &Breaker{}
 	b.Init("name", 10*time.Millisecond, 3)
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		commands := &wrapperE2{"Task2"}
 		err := b.Execute(commands)
 		if c := <-err; c != nil {
-			//fmt.Println(err)
 			e, ok := c.(Error)
 			if ok {
 				fmt.Println(e)
@@ -243,4 +243,33 @@ func ExampleBreaker_Execute_custom_timeut() {
 	b.Shutdown()
 	// Output: task timed out
 	// true
+}
+
+// Demonstrates a simple use of the circuit breaker, multiple clients
+func ExampleBreaker_Execute_custoom() {
+	fmt.Println("running ExampleBreaker_Execute_multiple_clients")
+	b := &Breaker{}
+	b.Init("name", 10*time.Millisecond, 5)
+	var wg sync.WaitGroup
+	wg.Add(5)
+	for i := 0; i < 5; i++ {
+		go func(j int) {
+			defer wg.Done()
+			commands := &wrapperE3{name: "Task" + strconv.Itoa(j), done: false}
+			err := b.Execute(commands)
+			c := <-err
+			if c != nil {
+				fmt.Println(c)
+				e, ok := c.(Error)
+				if ok {
+					fmt.Println(e)
+					fmt.Println(e.Timeout())
+				}
+			}
+		}(i)
+	}
+	time.Sleep(1 * time.Second)
+	wg.Wait()
+	b.Shutdown()
+	// Output:
 }

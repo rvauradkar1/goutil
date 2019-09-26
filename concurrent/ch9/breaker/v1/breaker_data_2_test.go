@@ -2,6 +2,7 @@ package breaker
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -51,14 +52,28 @@ func (w *wrapperE2) timeout() time.Duration {
 }
 
 type wrapperE3 struct {
+	name string
+	done bool
 }
 
 func (w *wrapperE3) CommandFunc() {
+	for i := 1; i < 100; i++ {
+		time.Sleep(1 * time.Millisecond)
+		if w.done {
+			return
+		}
+	}
+	log.Formatter = new(logrus.JSONFormatter)
+	log.WithFields(logrus.Fields{"Executed": w.name}).Info("task was executed")
 }
 func (w *wrapperE3) DefaultFunc() {
+	fmt.Println("Calling done")
+	w.done = true
 }
 func (w *wrapperE3) CleanupFunc() {
 }
-func (w *wrapperE3) timeout() time.Duration {
-	return time.Millisecond
+
+func randMillis(i int64) time.Duration {
+	r := rand.Int63n(i)
+	return time.Duration(r) * time.Millisecond
 }

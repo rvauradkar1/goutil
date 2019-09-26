@@ -126,7 +126,7 @@ func (b *Breaker) Execute(commands CommandFuncs) chan error {
 				case <-time.After(b.commandTimeout(commands)):
 					commands.DefaultFunc()
 					commands.CleanupFunc()
-					//log.WithFields(logrus.Fields{"name": b.name}).Info("task timed out")
+					log.WithFields(logrus.Fields{"name": b.name}).Info("task timed out")
 					be := Error{isTimeout: true, Err: errors.New("task timed out")}
 					errorch <- be
 				case <-done:
