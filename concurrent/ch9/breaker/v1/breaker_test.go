@@ -33,13 +33,13 @@ func Test_Shutdown(t *testing.T) {
 
 func Test_scanner_circuit_repaired(t *testing.T) {
 	b := &Breaker{}
-	b.Init("name", time.Second, 0)
+	b.Init("name", time.Second, 1)
 	b.isOk = false
 	b.HealthCheckInterval = 10
 	fmt.Println("starting Test_scanner_circuit_repaired")
-	time.Sleep(15 * time.Millisecond)
+	time.Sleep(150 * time.Millisecond)
 	fmt.Println("Return = ", b.status)
-	if b.status != iCircuitStillBad {
+	if b.status != iCircuitGood {
 		t.Errorf("Circuit should have been repaired")
 	}
 	b.Shutdown()
@@ -57,9 +57,7 @@ func Test_Execute_t(t *testing.T) {
 		go func(i int) {
 			defer wg.Done()
 			err := b.Execute(commands)
-			if c := <-err; c != nil {
-				fmt.Println("Err = ", i, "___", c, "___")
-			}
+			fmt.Println("Err = ", i, "___", err, "___")
 		}(i)
 	}
 	fmt.Println("Number of go routines = ", runtime.NumGoroutine())
@@ -180,14 +178,9 @@ func Test_exeute_after_shutdown(t *testing.T) {
 	ch := b.Execute(w1)
 	err := <-ch
 	fmt.Println(err)
-	e, ok := err.(Error)
-	if ok {
-		if !strings.Contains(e.Error(), "cicuit has been permanently shutdown") {
-			t.Errorf("Should contain %s %s'", "cicuit has been permanently shutdown", "'")
-		}
-		return
+	if !strings.Contains(err.Error(), "cicuit has been permanently shutdown") {
+		t.Errorf("Should contain %s %s'", "cicuit has been permanently shutdown", "'")
 	}
-	t.Errorf("Should return type of breaker.Error")
 }
 
 // Demonstrates use of init of the circuit breaker
@@ -205,16 +198,13 @@ func ExampleBreaker_Execute_simple() {
 	b := &Breaker{}
 	b.Init("name", 1000*time.Millisecond, 3)
 	// Override the HealthCheckInterval
-	b.HealthCheckInterval = 1000
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		commands := &wrapperE1{"Task1"}
-		err := b.Execute(commands)
-		if c := <-err; c != nil {
-			fmt.Println(err)
-		}
+		<-b.Execute(commands)
+		//<-errch
 	}()
 	wg.Wait()
 	b.Shutdown()
@@ -230,14 +220,10 @@ func ExampleBreaker_Execute_custom_timeut() {
 	go func() {
 		defer wg.Done()
 		commands := &wrapperE2{"Task2"}
-		err := b.Execute(commands)
-		if c := <-err; c != nil {
-			e, ok := c.(Error)
-			if ok {
-				fmt.Println(e)
-				fmt.Println(e.Timeout())
-			}
-		}
+		errch := b.Execute(commands)
+		err := <-errch
+		fmt.Println(err)
+		fmt.Println(err.Timeout())
 	}()
 	wg.Wait()
 	b.Shutdown()
@@ -256,20 +242,13 @@ func ExampleBreaker_Execute_custoom() {
 		go func(j int) {
 			defer wg.Done()
 			commands := &wrapperE3{name: "Task" + strconv.Itoa(j), done: false}
-			err := b.Execute(commands)
-			c := <-err
-			if c != nil {
-				fmt.Println("1 ", c)
-				e, ok := c.(Error)
-				if ok {
-					fmt.Println("2 ", e)
-					fmt.Println(e.Timeout())
-				}
-			}
+			errch := b.Execute(commands)
+			err := <-errch
+			fmt.Println("2 ", err)
+			fmt.Println(err.Timeout())
 		}(i)
 	}
 	time.Sleep(1 * time.Second)
 	wg.Wait()
 	b.Shutdown()
-	// Output:
 }
