@@ -1,63 +1,32 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
-	"sync"
+	"time"
 )
 
 func main() {
-	println("Fan in........")
+	println("Fan out........")
+	ch := tasks()
 
-	ch := make(chan string)
-	go func() {
-		defer close(ch)
-		for i := 0; i < 3; i++ {
-			ch <- "First " + strconv.Itoa(i)
-		}
-	}()
-
-	ch1 := make(chan string)
-	go func() {
-		defer close(ch1)
-		for i := 0; i < 3; i++ {
-			ch1 <- "Second " + strconv.Itoa(i)
-		}
-	}()
-
-	ch2 := make(chan string)
-	go func() {
-		defer close(ch2)
-		for i := 0; i < 3; i++ {
-			ch2 <- "Third " + strconv.Itoa(i)
-		}
-	}()
-
-	out := merge(ch, ch1, ch2)
-
-	for s := range out {
-		println(s)
+	for i := 0; i < 5; i++ {
+		go func(ch chan string, i int) {
+			for t := range ch {
+				fmt.Println("Routine ", strconv.Itoa(i), "Processing ", t)
+			}
+		}(ch, i)
 	}
-
+	time.Sleep(1 * time.Second)
 }
 
-func merge(channels ...<-chan string) <-chan string {
-	var wg sync.WaitGroup
-	wg.Add(len(channels))
-	out := make(chan string)
-
-	for _, ch := range channels {
-		go func(c <-chan string) {
-			for s := range c {
-				out <- s
-			}
-			wg.Done()
-		}(ch)
-	}
-
+func tasks() chan string {
+	ch := make(chan string)
 	go func() {
-		wg.Wait()
-		close(out)
+		for i := 0; i < 10; i++ {
+			ch <- "Task " + strconv.Itoa(i)
+		}
+		close(ch)
 	}()
-
-	return out
+	return ch
 }
