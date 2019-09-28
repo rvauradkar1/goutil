@@ -2,6 +2,7 @@ package breaker
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -11,11 +12,14 @@ import (
 )
 
 func Test_is_ok(t *testing.T) {
+	f, err := os.OpenFile("test.log", os.O_RDWR|os.O_CREATE, 0666)
+	fmt.Println(f)
+	fmt.Println(err)
 	fmt.Println("Testing Test_is_ok")
 	b := &Breaker{}
 	b.Init("name", time.Second, 0)
 	b.Shutdown()
-	if b.isOk != true {
+	if b.isOk {
 		t.Errorf("Circuite should have been ok")
 	}
 }

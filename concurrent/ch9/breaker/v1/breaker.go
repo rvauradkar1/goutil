@@ -2,6 +2,7 @@ package breaker
 
 import (
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -45,9 +46,17 @@ func (b *Breaker) Init(name string, timeout time.Duration, numConcurrent int) {
 	b.semaphore = make(chan bool, b.numConcurrent)
 	b.isOk = true
 	b.HealthCheckInterval = 100 // Defaulted to 100 ms, can be overridden
-	log = logrus.New()
+	log = initLog()
 	log.Formatter = new(logrus.JSONFormatter)
 	go healthcheck(b) // Start goroutine to start healthcheck
+}
+
+func initLog() *logrus.Logger {
+	log := logrus.New()
+	//file, err := os.OpenFile("breaker.log", os.O_RDWR|os.O_CREATE, 666)
+	log.Out = os.Stderr
+	//fmt.Println(err)
+	return log
 }
 
 const (
