@@ -16,18 +16,16 @@ func Test_is_ok(t *testing.T) {
 	fmt.Println(f)
 	fmt.Println(err)
 	fmt.Println("Testing Test_is_ok")
-	b := &Breaker{}
-	b.Init("name", time.Second, 0)
+	b := NewBreaker("name", time.Second, 0)
 	b.Shutdown()
-	if b.isOk {
+	if !b.isOk {
 		t.Errorf("Circuite should have been ok")
 	}
 }
 func Test_Shutdown(t *testing.T) {
 	fmt.Println("Testing Test_Shutdown")
-	b := &Breaker{}
+	b := NewBreaker("name", time.Second, 0)
 	b.isOk = false
-	b.Init("name", time.Second, 0)
 	b.HealthCheckInterval = 5
 	b.Shutdown()
 	if b.status != iShutdown || !b.isShutdown {
@@ -36,8 +34,7 @@ func Test_Shutdown(t *testing.T) {
 }
 
 func Test_scanner_circuit_repaired(t *testing.T) {
-	b := &Breaker{}
-	b.Init("name", time.Second, 1)
+	b := NewBreaker("name", time.Second, 1)
 	b.isOk = false
 	b.HealthCheckInterval = 10
 	fmt.Println("starting Test_scanner_circuit_repaired")
@@ -52,8 +49,7 @@ func Test_scanner_circuit_repaired(t *testing.T) {
 
 func Test_Execute_t(t *testing.T) {
 	commands := &wrapper{}
-	b := &Breaker{}
-	b.Init("name", 10*time.Millisecond, 3)
+	b := NewBreaker("name", 10*time.Millisecond, 3)
 	b.HealthCheckInterval = 1000
 	var wg sync.WaitGroup
 	wg.Add(5)
@@ -75,8 +71,7 @@ func Test_Execute_t(t *testing.T) {
 
 func Test_Execute_1(t *testing.T) {
 	fmt.Println("Throttle demo....")
-	b := &Breaker{}
-	b.Init("name", 10*time.Millisecond, 3)
+	b := NewBreaker("name", 10*time.Millisecond, 3)
 	if !b.isOk {
 		t.Errorf("Circuit should be ok")
 	}
@@ -88,8 +83,7 @@ func Test_Execute_1(t *testing.T) {
 
 func Test_Execute_2(t *testing.T) {
 	fmt.Println("Running Test_Execute_2 demo....")
-	b := &Breaker{}
-	b.Init("name", 10*time.Millisecond, 3)
+	b := NewBreaker("name", 10*time.Millisecond, 3)
 	w := &wrapper{exec: false}
 	b.Execute(w)
 	time.Sleep(5 * time.Millisecond)
@@ -101,8 +95,7 @@ func Test_Execute_2(t *testing.T) {
 
 func Test_Execute_exceed_limit_wait_till_circuit_ok(t *testing.T) {
 	fmt.Println("Running Test_Execute_exceed_limit_wait_till_circuit_ok demo....")
-	b := &Breaker{}
-	b.Init("name", 2000*time.Millisecond, 3)
+	b := NewBreaker("name", 2000*time.Millisecond, 3)
 	b.HealthCheckInterval = 1000
 	w1 := &wrapper2{"Service 1", false}
 	b.Execute(w1)
@@ -124,8 +117,7 @@ func Test_Execute_exceed_limit_wait_till_circuit_ok(t *testing.T) {
 
 func Test_execute_exceed_limit_wait_tillok_submit_more(t *testing.T) {
 	fmt.Println("Running Test_execute_exceed_limit_wait_tillok_submit_more demo....")
-	b := &Breaker{}
-	b.Init("name", 10*time.Millisecond, 3)
+	b := NewBreaker("name", 10*time.Millisecond, 3)
 	b.HealthCheckInterval = 1000
 	w1 := &wrapper2{"Service 1", false}
 	b.Execute(w1)
@@ -145,8 +137,7 @@ func Test_execute_exceed_limit_wait_tillok_submit_more(t *testing.T) {
 	b.Shutdown()
 }
 func Test_scanner_circuit_multipl_Shutdown(t *testing.T) {
-	b := &Breaker{}
-	b.Init("name", time.Second, 1)
+	b := NewBreaker("name", time.Second, 1)
 	b.isOk = false
 	b.HealthCheckInterval = 10
 	fmt.Println("starting Test_scanner_circuit_multipl_Shutdown")
@@ -161,8 +152,7 @@ func Test_scanner_circuit_multipl_Shutdown(t *testing.T) {
 }
 
 func Test_timeout_default(t *testing.T) {
-	b := &Breaker{}
-	b.Init("name", time.Second, 1)
+	b := NewBreaker("name", time.Second, 1)
 	to := b.commandTimeout(nil)
 	if to != time.Second {
 		t.Errorf("Was expecting a time.Second, instead got %v", to)
@@ -175,8 +165,7 @@ func Test_timeout_default(t *testing.T) {
 
 func Test_exeute_after_shutdown(t *testing.T) {
 	fmt.Println("Running Test_exeute_after_shutdown demo....")
-	b := &Breaker{}
-	b.Init("name", 10*time.Millisecond, 3)
+	b := NewBreaker("name", 10*time.Millisecond, 3)
 	b.Shutdown()
 	w1 := &wrapper2{"Service 1", false}
 	ch := b.Execute(w1)
@@ -190,17 +179,15 @@ func Test_exeute_after_shutdown(t *testing.T) {
 // Demonstrates use of init of the circuit breaker
 func ExampleBreaker_Init() {
 	fmt.Println("Testing Test_is_ok")
-	b := &Breaker{}
+	b := NewBreaker("name", time.Second, 10)
 	// Initializes the circuit
-	b.Init("name", time.Second, 10)
 	// Shuts down the circuit completely
 	b.Shutdown()
 }
 
 // Demonstrates a simple use of the circuit breaker, with an override of the HealthCheckInterval
 func ExampleBreaker_Execute_simple() {
-	b := &Breaker{}
-	b.Init("name", 1000*time.Millisecond, 3)
+	b := NewBreaker("name", 1000*time.Millisecond, 3)
 	// Override the HealthCheckInterval
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -217,8 +204,7 @@ func ExampleBreaker_Execute_simple() {
 
 // Demonstrates a simple use of the circuit breaker, client overrides timeout at the breaker level
 func ExampleBreaker_Execute_custom_timeut() {
-	b := &Breaker{}
-	b.Init("name", 10*time.Millisecond, 3)
+	b := NewBreaker("name", 10*time.Millisecond, 3)
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -238,8 +224,7 @@ func ExampleBreaker_Execute_custom_timeut() {
 // Demonstrates a simple use of the circuit breaker, multiple clients
 func ExampleBreaker_Execute_custoom() {
 	fmt.Println("running ExampleBreaker_Execute_multiple_clients")
-	b := &Breaker{}
-	b.Init("name", 10*time.Millisecond, 4)
+	b := NewBreaker("name", 10*time.Millisecond, 4)
 	var wg sync.WaitGroup
 	wg.Add(5)
 	for i := 0; i < 5; i++ {

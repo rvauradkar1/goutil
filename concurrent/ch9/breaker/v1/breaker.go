@@ -38,6 +38,21 @@ type Breaker struct {
 
 var log *logrus.Logger
 
+// NewBreaker initializes the circuit breaker
+func NewBreaker(name string, timeout time.Duration, numConcurrent int) *Breaker {
+	b := Breaker{}
+	b.name = name
+	b.timeout = timeout
+	b.numConcurrent = numConcurrent
+	b.semaphore = make(chan bool, b.numConcurrent)
+	b.isOk = true
+	b.HealthCheckInterval = 100 // Defaulted to 100 ms, can be overridden
+	log = initLog()
+	log.Formatter = new(logrus.JSONFormatter)
+	go healthcheck(&b) // Start goroutine to start healthcheck
+	return &b
+}
+
 // Init initializes the circuit breaker
 func (b *Breaker) Init(name string, timeout time.Duration, numConcurrent int) {
 	b.name = name

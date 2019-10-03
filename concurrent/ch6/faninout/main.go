@@ -8,20 +8,15 @@ import (
 
 func main() {
 	println("Fan in........")
-
 	tasksch := faninTasks()
-
 	fanoutTasks(tasksch)
-
 }
 
 func faninTasks() chan string {
 	tasks1 := taskGenerator("First ")
 	tasks2 := taskGenerator("Second ")
 	tasks3 := taskGenerator("Third ")
-
 	out := merge(tasks1, tasks2, tasks3)
-
 	return out
 }
 
