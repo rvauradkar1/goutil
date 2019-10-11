@@ -2,9 +2,8 @@ package main
 
 import "fmt"
 
-// Sharing by communicating
 func main() {
-	fmt.Println("Futures....")
+	fmt.Println("Streaming futures....")
 
 	ch := streamingFuture()
 	for i := range ch {
