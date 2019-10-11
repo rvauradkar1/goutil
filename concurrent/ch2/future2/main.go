@@ -4,28 +4,21 @@ import "fmt"
 
 // Sharing by communicating
 func main() {
-	fmt.Println("Future chaining....")
+	fmt.Println("Futures....")
 
-	//ch1 := futureTask1()
-	//ch2 := futureTask2(ch1)
-
-	ch1 := futureTask2(futureTask1())
-
-	fmt.Println(<-ch1)
+	ch := streamingFuture()
+	for i := range ch {
+		fmt.Println(i)
+	}
 }
 
-func futureTask1() chan string {
-	out := make(chan string)
+func streamingFuture() chan int {
+	ch := make(chan int)
 	go func() {
-		out <- "Result 1 "
+		defer close(ch)
+		for i := 0; i < 5; i++ {
+			ch <- i
+		}
 	}()
-	return out
-}
-
-func futureTask2(in chan string) chan string {
-	out := make(chan string)
-	go func() {
-		out <- <-in + "Result 2 "
-	}()
-	return out
+	return ch
 }
