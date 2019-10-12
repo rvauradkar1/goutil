@@ -9,15 +9,17 @@ Purpose of this repository:
 Layout of samples (source code contains documentation to introduce ideas/concepts)
 
 1. ch1 - Demonstrates forking and joining of goroutines. (https://github.com/rvauradkar1/goutil/blob/master/concurrent/ch1/forkjoin/main.go)
-2. ch2 - Futures demo (while there are not futures in Go, this is an instructional tool)
+2. ch2 - Futures demo (while there are no futures in Go, helps to bridge from Java to Go)
    1. future - Simple channel demo to communicate data across 2 goroutines. (https://github.com/rvauradkar1/goutil/blob/master/concurrent/ch2/future/main.go)
-   2. future2 - A "streaming" channel. This is when a channel communicates more than on value.(https://github.com/rvauradkar1/goutil/blob/master/concurrent/ch2/future2/main.go) 
-   3. future3 - A pipeline - chaining of channels. (https://github.com/rvauradkar1/goutil/blob/master/concurrent/ch2/future2/main.go)
+   2. future2 - A "streaming" channel. This is when a channel communicates more than one value.(https://github.com/rvauradkar1/goutil/blob/master/concurrent/ch2/future2/main.go) 
+   3. future3 - A pipeline - chaining of channels. (https://github.com/rvauradkar1/goutil/blob/master/concurrent/ch2/future3/main.go)
+3. ch3 - Demonstarted geberator/streaming pattern.
+   1. basic - A simple generator. (https://github.com/rvauradkar1/goutil/blob/master/concurrent/ch3/generator/basic/main.go)
+   2. advanced1 - The consumer chooses when to stop the generator with a "done" channel. (https://github.com/rvauradkar1/goutil/blob/master/concurrent/ch3/generator/advanced1/main.go)
+   3. advanced2 - The producer chooses when to stop the generator based on some condition. (https://github.com/rvauradkar1/goutil/blob/master/concurrent/ch3/generator/advanced2/main.go)
 
-  1.2.1 future2
 
-
-2. Learn Web development
+4. Learn Web development
 	1. Basic setup of a Http/Https Webserver.
 	2. Folder structures for Web apps.
 	3. Demonstrate proxy/reverse-proxy capabilities.

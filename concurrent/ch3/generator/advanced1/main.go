@@ -24,6 +24,7 @@ func generator(done chan bool) chan int {
 		defer close(ch)
 		for i := 0; ; i++ {
 			select {
+			// If consumer is done, then stop streaming
 			case <-done:
 				fmt.Println("I am wrapping up.......")
 				return

@@ -31,7 +31,7 @@ func taskGenerator(s string) chan string {
 	return ch
 }
 
-// From Samir Ajamni's excellent post on blog.golang
+// From Samir Ajamni's excellent post on blog.golang.org
 func merge(channels ...<-chan string) <-chan string {
 	var wg sync.WaitGroup
 	wg.Add(len(channels))
