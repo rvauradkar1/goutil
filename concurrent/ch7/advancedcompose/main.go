@@ -1,39 +1,48 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 )
 
 func main() {
-	ch, _ := task1()
-	println("called task1 ", ch)
+	ctx, cancel := context.WithCancel(context.Background())
+	fmt.Println(cancel)
+	ch, _ := task1(ctx)
+	fmt.Println("called task1 ", ch)
 	for s := range ch {
 		fmt.Println(s.s, "---", s.err)
+		if e := s.err; e != nil {
+			strings.Contains(s.err.Error(), "failure")
+			fmt.Println("calling cancel")
+			cancel()
+			//break
+		}
 	}
+	//time.Sleep(1 * time.Second)
 }
 
-type resp1 struct {
-	s   string
-	err error
-}
-
-type resp2 struct {
-	s   string
-	err error
-}
-
-func task1() (<-chan resp1, error) {
+func task1(ctx context.Context) (<-chan resp1, error) {
 	out := make(chan resp1)
 	go func() {
 		defer close(out)
 		for i := 0; i < 5; i++ {
-			if i == 3 {
-				s1 := resp1{err: errors.Errorf("Service failure on %d", i)}
-				out <- s1
-			} else {
-				out <- resp1{s: fmt.Sprintf("Performing Task %d", i)}
+			select {
+			case <-ctx.Done():
+				fmt.Println("Done, returning")
+				return
+			default:
+				if i == 2 {
+					s1 := resp1{err: errors.Errorf("Service failure on %d", i)}
+					fmt.Println("not ok ", i)
+					out <- s1
+				} else {
+					fmt.Println("ok ", i)
+					out <- resp1{s: fmt.Sprintf("Performing Task %d", i)}
+				}
 			}
 		}
 	}()
@@ -48,9 +57,19 @@ func task2(in <-chan resp1) (<-chan resp2, error) {
 			if s.err != nil {
 				fmt.Println(s.err.Error())
 			} else {
-				out <- resp2{s: fmt.Sprintf("Performing Task %d", i)}
+				out <- resp2{s: fmt.Sprintf("Performing Task ")}
 			}
 		}
 	}()
 	return out, nil
+}
+
+type resp1 struct {
+	s   string
+	err error
+}
+
+type resp2 struct {
+	s   string
+	err error
 }
