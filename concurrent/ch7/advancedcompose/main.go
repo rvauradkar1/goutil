@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -14,15 +15,19 @@ func main() {
 	ch, _ := task1(ctx)
 	fmt.Println("called task1 ", ch)
 	for s := range ch {
-		fmt.Println(s.s, "---", s.err)
-		if e := s.err; e != nil {
-			strings.Contains(s.err.Error(), "failure")
-			fmt.Println("calling cancel")
-			cancel()
-			//break
+		select {
+		case <-ctx.Done():
+			fmt.Println("done!!!!")
+		default:
+			fmt.Println(s.s, "---", s.err)
+			if e := s.err; e != nil {
+				strings.Contains(s.err.Error(), "failure")
+				fmt.Println("calling cancel")
+				cancel()
+			}
 		}
 	}
-	//time.Sleep(1 * time.Second)
+	time.Sleep(time.Second)
 }
 
 func task1(ctx context.Context) (<-chan resp1, error) {
