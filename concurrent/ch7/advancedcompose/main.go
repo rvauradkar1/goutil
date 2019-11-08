@@ -18,6 +18,7 @@ func main() {
 		select {
 		case <-ctx.Done():
 			fmt.Println("done!!!!")
+			break
 		default:
 			fmt.Println(s.s, "---", s.err)
 			if e := s.err; e != nil {
@@ -54,7 +55,7 @@ func task1(ctx context.Context) (<-chan resp1, error) {
 	return out, nil
 }
 
-func task2(in <-chan resp1) (<-chan resp2, error) {
+func task2(ctx context.Context, in <-chan resp1) (<-chan resp2, error) {
 	out := make(chan resp2)
 	go func() {
 		defer close(out)
