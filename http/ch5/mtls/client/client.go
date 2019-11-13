@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	RootCertificatePath string = "../00-certificates/minica.pem"
-	ClientCertPath      string = "../00-certificates/client/cert.pem"
-	ClientKeyPath       string = "../00-certificates/client/key.pem"
+	RootCertificatePath string = "../ca-cert.pem"
+	ClientCertPath      string = "client-cert.pem"
+	ClientKeyPath       string = "client-key.pem"
 )
 
 func main() {
@@ -62,7 +62,7 @@ func main() {
 	}
 
 	// prepare a request
-	u := url.URL{Scheme: "https", Host: "server-cert:8080", Path: "server"}
+	u := url.URL{Scheme: "https", Host: "localhost:8080", Path: "server"}
 	r, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
 		log.Fatalf("request failed : %v", err)
