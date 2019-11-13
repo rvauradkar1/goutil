@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	CertPath            string = "../../00-certificates/server/cert.pem"
-	KeyPath             string = "../../00-certificates/server/key.pem"
-	RootCertificatePath string = "../../00-certificates/minica.pem"
+	CertPath            string = "server-cert.pem"
+	KeyPath             string = "server-key.pem"
+	RootCertificatePath string = "../ca-cert.pem"
 )
 
 func main() {
