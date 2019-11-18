@@ -4,6 +4,7 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -18,6 +19,7 @@ const (
 )
 
 func main() {
+
 	// Create a CA certificate pool for all the servers that you want to authenticate
 	rootCA, err := ioutil.ReadFile(RootCertificatePath)
 	if err != nil {
@@ -26,7 +28,7 @@ func main() {
 	rootCAPool := x509.NewCertPool()
 	rootCAPool.AppendCertsFromPEM(rootCA)
 	log.Println("RootCA loaded")
-	cert, err := tls.LoadX509KeyPair(ClientCertPath, ClientKeyPath)
+
 	// configure TLS on http.Client
 	c := http.Client{
 		Timeout: 5 * time.Second,
@@ -35,7 +37,28 @@ func main() {
 			TLSClientConfig: &tls.Config{
 				RootCAs: rootCAPool,
 				// Load clients key-pair. This will be sent to server
-				Certificates: []tls.Certificate{cert},
+
+				GetClientCertificate: func(info *tls.CertificateRequestInfo) (certificate *tls.Certificate, e error) {
+					c, err := tls.LoadX509KeyPair(ClientCertPath, ClientKeyPath)
+					if err != nil {
+						fmt.Printf("Error loading client key pair: %v\n", err)
+						return nil, err
+					}
+					return &c, nil
+				},
+				// print  information about the certificate received from server
+				VerifyPeerCertificate: func(rawCerts [][]byte, chains [][]*x509.Certificate) error {
+					if len(chains) > 0 {
+						fmt.Println("Verified certificate chain from peer:")
+						for _, v := range chains {
+							for i, cert := range v {
+								fmt.Printf("  Cert %d:\n", i)
+								fmt.Printf(CertificateInfo(cert))
+							}
+						}
+					}
+					return nil
+				},
 			},
 		},
 	}
@@ -69,4 +92,16 @@ func callServer(c http.Client, r *http.Request) (string, error) {
 
 	// print the data
 	return string(data), nil
+}
+
+func CertificateInfo(cert *x509.Certificate) string {
+	if cert.Subject.CommonName == cert.Issuer.CommonName {
+		return fmt.Sprintf("    Self-signed certificate %v\n", cert.Issuer.CommonName)
+	}
+
+	s := fmt.Sprintf("    Subject %v\n", cert.DNSNames)
+	s += fmt.Sprintf("    Usage %v\n", cert.ExtKeyUsage)
+	s += fmt.Sprintf("    Issued by %s\n", cert.Issuer.CommonName)
+	s += fmt.Sprintf("    Issued by %s\n", cert.Issuer.SerialNumber)
+	return s
 }
