@@ -39,34 +39,25 @@ func main() {
 			},
 		},
 	}
+	request(c)
+}
 
+func request(c http.Client) {
 	// prepare a request
 	u := url.URL{Scheme: "https", Host: "localhost:8080", Path: "server"}
 	r, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
 		log.Fatalf("request failed : %v", err)
 	}
-
-	// make the request
-	var data string
-	if data, err = callServer(c, r); err != nil {
-		log.Fatal(err)
-	}
-	log.Println(data)
-}
-
-func callServer(c http.Client, r *http.Request) (string, error) {
 	response, err := c.Do(r)
 	if err != nil {
-		return "", err
+		log.Fatalf("request failed : %v", err)
 	}
 	defer response.Body.Close()
 
 	data, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return "", err
+		log.Fatalf("request failed : %v", err)
 	}
-
-	// print the data
-	return string(data), nil
+	log.Println(string(data))
 }
