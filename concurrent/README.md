@@ -30,7 +30,7 @@ Layout of samples (source code contains documentation to introduce ideas/concept
 9. ch9 - fanin - Demonstrates throttling - ensuring that a serivce is not over-burdened with requests.
    1. basic - Basic throttling without timeout. (https://github.com/rvauradkar1/goutil/blob/master/concurrent/ch9/throttle/basic/main.go)
    2. advanced - Throttling with timeout. (https://github.com/rvauradkar1/goutil/blob/master/concurrent/ch9/throttle/advanced/main.go)
-10.Circuit breaker - Reproduce the functionality provided by Netflix circuit breaker. (https://github.com/Netflix/Hystrix/wiki/How-it-Works) Flowchart: (https://raw.githubusercontent.com/wiki/Netflix/Hystrix/images/hystrix-command-flow-chart.png)
+10. Circuit breaker - Reproduce the functionality provided by Netflix circuit breaker. (https://github.com/Netflix/Hystrix/wiki/How-it-Works) Flowchart: (https://raw.githubusercontent.com/wiki/Netflix/Hystrix/images/hystrix-command-flow-chart.png)
     Requirements of the circuit breaker:
     1. Fast fail - Client never blocks - either executes request or returns error with explanation.
     2. Auto repair - Circuit will repair itself after it is shutdown due to excess load.
