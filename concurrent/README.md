@@ -32,9 +32,14 @@ Layout of samples (source code contains documentation to introduce ideas/concept
    2. advanced - Throttling with timeout. (https://github.com/rvauradkar1/goutil/blob/master/concurrent/ch9/throttle/advanced/main.go)
 10.Circuit breaker - Reproduce the functionality provided by Netflix circuit breaker. (https://github.com/Netflix/Hystrix/wiki/How-it-Works) Flowchart: (https://raw.githubusercontent.com/wiki/Netflix/Hystrix/images/hystrix-command-flow-chart.png)
     Requirements of the circuit breaker:
-    1. A
-    2. B
-    3. C
+    1. Fast fail - Client never blocks - either executes request or returns error with explanation.
+    2. Auto repair - Circuit will repair itself after it is shutdown due to excess load.
+    3. Default behavior - Breaker will execute default behavior in service failure scenarios. This is followed by call to cancel behavior.
+    4. Cancel behavior - Breaker will execute cancel behavior in case of service failure. Cancel will be called after default.
+    5. Timeout - Clients can configure timeouts, after which breaker will execute default and cancel behavior in order.
+    Source code : (https://github.com/rvauradkar1/goutil/blob/master/concurrent/ch10/breaker/v1/breaker.go)
+    Test code - contains examples that can be copied and pasted for working with the circuit. (https://github.com/rvauradkar1/goutil/blob/master/concurrent/ch10/breaker/v1/breaker_test.go)
+   
 
 
 ## http server and client
