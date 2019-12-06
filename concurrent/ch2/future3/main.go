@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 
-// Sharing by communicating
+// Chaining of goroutines/channels
 func main() {
 	fmt.Println("Future chaining....")
 
