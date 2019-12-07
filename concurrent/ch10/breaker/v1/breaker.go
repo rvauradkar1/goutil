@@ -14,6 +14,7 @@ import (
 // Clients need ensure that they do not panic. If CommandFunc panics,
 // DefaultFunc and CleanupFunc are called in order. If DefaultFunc panics, then CleanupFunc is NEVER called
 type CommandFuncs interface {
+	Name() string // Helps in logging and metrics generation
 	CommandFunc() // Function to do the actual work
 	DefaultFunc() // Function called by breaker in case of timeout, client implements default behavior
 	CleanupFunc() // Function called by breaker in case of timeout. client implements any cleanup actions
@@ -38,8 +39,8 @@ type Breaker struct {
 
 var log *logrus.Logger
 
-// NewBreaker initializes the circuit breaker
-func NewBreaker(name string, timeout time.Duration, numConcurrent int) *Breaker {
+// New initializes the circuit breaker
+func New(name string, timeout time.Duration, numConcurrent int) *Breaker {
 	b := Breaker{}
 	b.name = name
 	b.timeout = timeout
@@ -54,6 +55,7 @@ func NewBreaker(name string, timeout time.Duration, numConcurrent int) *Breaker 
 }
 
 // Init initializes the circuit breaker
+/*
 func (b *Breaker) Init(name string, timeout time.Duration, numConcurrent int) {
 	b.name = name
 	b.timeout = timeout
@@ -65,6 +67,7 @@ func (b *Breaker) Init(name string, timeout time.Duration, numConcurrent int) {
 	log.Formatter = new(logrus.JSONFormatter)
 	go healthcheck(b) // Start goroutine to start healthcheck
 }
+*/
 
 func initLog() *logrus.Logger {
 	log := logrus.New()
@@ -95,7 +98,7 @@ func healthcheck(b *Breaker) {
 				log.WithFields(logrus.Fields{"name": b.name}).Info("circuit repaired, load it normal")
 				b.status = iCircuitGood
 			default:
-				fmt.Println("stidd bad")
+				fmt.Println("circuit still bad")
 				log.WithFields(logrus.Fields{"name": b.name}).Info("attempt to repair circuit failed")
 				b.status = iCircuitStillBad
 			}
@@ -151,9 +154,11 @@ func (b *Breaker) Execute(commands CommandFuncs) chan Error {
 				// Deals with timeout of command
 				select {
 				case <-time.After(b.commandTimeout(commands)):
+					// Call default and cleanup
 					commands.DefaultFunc()
 					commands.CleanupFunc()
 					log.WithFields(logrus.Fields{"name": b.name}).Info("task timed out")
+					// Return timeout error
 					be := Error{isTimeout: true, Err: errors.New("task timed out")}
 					errorch <- be
 				case <-done:
